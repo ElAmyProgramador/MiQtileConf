@@ -24,21 +24,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from libqtile import bar, layout, qtile, widget
+# librerias para que la wea funke
+from libqtile import bar, layout, qtile, widget, hook
 from libqtile.config import Click, Drag, Group, Key, Match, Screen
 from libqtile.lazy import lazy
 from libqtile.utils import guess_terminal
-#import os, subprocess
+import os, subprocess
 
-# def autostart():
+# funcion de autostart para algunas funcionalidades
+@hook.subscribe.startup_once
+def autostart():
     #home = os.path.expanduser('~')
-    #subprocess.Popen(["~/.config/qtile/autostart.sh"])
+    subprocess.Popen(["~/.config/qtile/autostart.sh"])
 
-mod = "mod4"
-alt = "mod1"
-terminal = "kitty"
-Nav = "firefox"
+# constantes
+mod = "mod4" # la tecla del guiindous
+alt = "mod1" # la tecla alt, no se usa de momento pero ahi ta
+terminal = "kitty" # terminal principal, si tienes otra pon su nombre, y si no sabes cual es pon solamente guess_terminal()
+Nav = "firefox" # navegador web que uso
+GestorArchivos = "dolphin" # el gestor de archivos grafico, prefiero ranger (aunque no lo sepa usar)
 
+# configuracion de teclas y atajos
 keys = [
     # A list of available commands that can be bound to keys can be found
     # at https://docs.qtile.org/en/latest/manual/config/lazy.html
@@ -74,6 +80,8 @@ keys = [
     Key([mod], "Return", lazy.spawn(terminal), desc="Launch terminal"),
     # aqui va lo del navegador y no abajo xD
     Key([mod, "control"], "f", lazy.spawn(Nav), desc="Lanzar el navegador web"),
+    # aqui va lo del admin de archivos
+    Key([mod, "control"], "d", lazy.spawn(GestorArchivos), desc="Lanzar dolphin"),
     # Toggle between different layouts as defined below
     Key([mod], "Tab", lazy.next_layout(), desc="Toggle between layouts"),
     Key([mod], "w", lazy.window.kill(), desc="Kill focused window"),
@@ -142,7 +150,7 @@ Colores = {
 
 layout_theme = {
     "border_width": 3,
-    "margin": 14,
+    "margin": 10,
     "border_focus": Colores["ColorResaltar"],
     "border_normal": Colores["ColorInactivo"]
 }
@@ -155,7 +163,8 @@ layouts = [
     # layout.Bsp(),
     # layout.Matrix(),
     layout.MonadTall(**layout_theme),
-    # layout.MonadWide(),
+    layout.MonadWide(**layout_theme),
+    layout.MonadThreeCol(**layout_theme),
     # layout.RatioTile(),
     # layout.Tile(),
     # layout.TreeTab(),
@@ -175,18 +184,33 @@ screens = [
     Screen(
         top=bar.Bar(
             [
-                widget.CurrentLayout(),
+                widget.CurrentLayout(
+                    foreground = Colores["ColorResaltar"],
+                    background = Colores["ColorFondo"]
+                ),
                 widget.GroupBox(
                     highlight_method = "line",
                     this_current_screen_border = Colores["ColorResaltar"],
                     this_screen_border = Colores["ColorResaltar"],
+                    other_current_screen_border = Colores["ColorInactivo"],
                     other_screen_border = Colores["ColorInactivo"],
                     foreground = Colores["ColorTexto"],
                     background = Colores["ColorFondo"],
+                    font = "Hack"
                 ),
                 widget.Prompt(),
-                widget.WindowName(foreground = Colores["ColorTexto"]),
-                widget.Volume(foreground = Colores["ColorApplet"]),
+                widget.WindowName(
+                    foreground = Colores["ColorTexto"],
+                    background = Colores["ColorFondo"],
+                    font = "Hack",
+                    fontsize = 14
+                ),
+                widget.Volume(
+                    foreground = Colores["ColorApplet"],
+                    background = Colores["ColorFondo"],
+                    font = "Hack",
+                    fontsize = 14,
+                ),
                 widget.Chord(
                     chords_colors={
                         "launch": ("#ff0000", "#ffffff"),
@@ -197,20 +221,55 @@ screens = [
                 #widget.TextBox("Press &lt;M-r&gt; to spawn", foreground="#d75f5f"),
                 widget.TextBox(
                     "La biologa está con alguién mejor que tu :'D",
-                    foreground = Colores["ColorApurateWey"]
+                    foreground = Colores["ColorApurateWey"],
+                    background = Colores["ColorFondo"],
+                    font = "Hack",
+                    fontsize = 16
                 ),
-                widget.CPU(
-                    format = "Core i7 7700HQ: {load_percent}%",
-                    foreground = Colores["ColorHardware"]
+                # ya no uso el porcentaje, lo cambie por la grafica
+                #widget.CPU(
+                    #format = "Core i7 7700HQ: {load_percent}%",
+                    #foreground = Colores["ColorHardware"],
+                    #background = Colores["ColorFondo"],
+                    #font = "Hack",
+                    #fontsize = 14
+                #),
+                widget.TextBox(
+                    "Core i7 7700HQ:",
+                    foreground = Colores["ColorHardware"],
+                    background = Colores["ColorFondo"],
+                    font = "Hack",
+                    fontsize = 14
+                ),
+                widget.CPUGraph(
+                    border_color = Colores["ColorResaltar"],
+                    core = 'all',
+                    frequency = 1,
+                    graph_color = Colores["ColorInactivo"],
+                ),
+                widget.MemoryGraph(
+                    border_color = Colores["ColorResaltar"],
+                    frequency = 1,
+                    graph_color = Colores["ColorInactivo"]
                 ),
                 widget.Memory(
-                    format = "RAM: {MemUsed:.0f} Mb / {MemTotal:.0f} Mb",
+                    format = "RAM: {MemUsed:.0f} Mb",
                     #measure_mem = "G",
                     #update_interval = 1.0,
-                    foreground = Colores["ColorHardware"]
+                    foreground = Colores["ColorHardware"],
+                    background = Colores["ColorFondo"],
+                    font = "Hack",
+                    fontsize = 14
                 ),
                 widget.Battery(
-                    foreground = Colores["ColorHardware"]
+                    # aqui iba lo de la bateria
+                    format = "{percent: 2.0%}",
+                    foreground = Colores["ColorHardware"],
+                    background = Colores["ColorFondo"],
+                    font = "Hack",
+                    fontsize = 14,
+                    full_char = "=",
+                    low_foreground = Colores["ColorApurateWey"],
                 ),
                 # NB Systray is incompatible with Wayland, consider using StatusNotifier instead
                 # widget.StatusNotifier(),
@@ -219,8 +278,11 @@ screens = [
                     background = Colores["ColorFondo"]
                 ),
                 widget.Clock(
-                    format="%Y-%m-%d %a %I:%M %p",
-                    foreground = Colores["ColorTexto"]
+                    format="%m-%d-%y %a %I:%M %p",
+                    foreground = Colores["ColorTexto"],
+                    background = Colores["ColorFondo"],
+                    font = "Hack",
+                    fontsize = 14
                 ),
                 #widget.QuickExit(),
             ],
